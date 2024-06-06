@@ -3,12 +3,10 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
     meta::ParseNestedMeta,
-    parse::{Parse, ParseStream, Parser, Result},
+    parse::{Parse, ParseStream, Result},
     parse_macro_input,
     spanned::Spanned,
-    token::Token,
-    Attribute, Field, Ident, ItemStruct, LitStr, Meta, PathSegment, Token, Type,
-    ItemFn
+    Ident, ItemStruct, LitStr, Token,
 };
 
 #[derive(Default)]
@@ -96,7 +94,7 @@ fn create_expanded(
                    })
                }
            }
-        }
+        },
     };
 
     proc_macro2::TokenStream::from(expanded)

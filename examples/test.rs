@@ -10,24 +10,24 @@ fn lol(a: Timestamp) -> DateTime<Utc> {
 struct Foo {
     name: String,
     #[brick_field(convert_field_func = "lol")]
-    ts: DateTime<Utc>
+    ts: DateTime<Utc>,
 }
 
 struct Bar {
     name: String,
-    ts: Timestamp
+    ts: Timestamp,
 }
 
 struct Timestamp {
-    seconds: i64
+    seconds: i64,
 }
 
 fn main() {
     let b = Bar {
         name: "Joe".to_string(),
         ts: Timestamp {
-            seconds: 1717708136
-        }
+            seconds: 1717708136,
+        },
     };
 
     let foo = Foo::from(b);
