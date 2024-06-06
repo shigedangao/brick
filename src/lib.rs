@@ -8,6 +8,7 @@ use syn::{
     spanned::Spanned,
     token::Token,
     Attribute, Field, Ident, ItemStruct, LitStr, Meta, PathSegment, Token, Type,
+    ItemFn
 };
 
 #[derive(Default)]
@@ -62,7 +63,7 @@ impl Parse for BrickFieldArgs {
 
 #[proc_macro_attribute]
 pub fn brick_field(args: TokenStream, input: TokenStream) -> TokenStream {
-    let _ = parse_macro_input!(args as LitStr);
+    let _ = parse_macro_input!(args as BrickFieldArgs);
 
     input
 }
@@ -77,7 +78,6 @@ fn create_expanded(
     // [From, SourceStructName]
     let expanded = match attr.converter {
         ConverterType::From => quote! {
-            #[automatically_derived]
            impl From<#source> for #target_name {
                fn from(arg: #source) -> Self {
                    Self {
@@ -87,7 +87,6 @@ fn create_expanded(
            }
         },
         ConverterType::TryFrom => quote! {
-           #[automatically_derived]
            impl TryFrom<#source> for #target_name {
                type Error = Result<Self, Self::Error>;
 
@@ -97,8 +96,7 @@ fn create_expanded(
                    })
                }
            }
-        },
-        _ => quote! {},
+        }
     };
 
     proc_macro2::TokenStream::from(expanded)
@@ -119,16 +117,16 @@ pub fn brick(args: TokenStream, target: TokenStream) -> TokenStream {
             let field_name = &item.ident;
             let fields_args: Option<BrickFieldArgs> = item.attrs.iter().find_map(|attr| {
                 attr.path()
-                    .is_ident("brick")
-                    .then(|| attr.parse_args().unwrap())
+                    .is_ident("brick_field")
+                    .then(|| attr.parse_args().expect("Expect to parse brick_fields arg"))
             });
 
             match fields_args {
                 Some(BrickFieldArgs::ConvertFieldFn(convert_field)) => {
-                    let value = convert_field.value();
+                    let f = format_ident!("{}", convert_field.value());
 
                     proc_macro2::TokenStream::from(quote! {
-                        #field_name: #value(arg.#field_name)
+                        #field_name: #f(arg.#field_name)
                     })
                 }
                 _ => proc_macro2::TokenStream::from(quote! { #field_name: arg.#field_name }),
@@ -136,7 +134,15 @@ pub fn brick(args: TokenStream, target: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
 
-    let input_clone = input.clone();
+    let mut input_clone = input.clone();
+
+    // Dunno why it's needed. Maybe to remove the attribute to avoid any output in the AST ?
+    input_clone.fields.iter_mut().for_each(|field| {
+        field
+            .attrs
+            .retain(|attr| !attr.path().is_ident("brick_field"));
+    });
+
     let expanded = create_expanded(attrs, input.ident, fields);
 
     proc_macro2::TokenStream::from(quote! {
