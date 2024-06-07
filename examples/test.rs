@@ -1,6 +1,7 @@
 use brick::{brick, brick_field};
 use chrono::{DateTime, Utc};
 
+
 fn lol(a: Timestamp) -> DateTime<Utc> {
     DateTime::from_timestamp(a.seconds, 0).unwrap()
 }
@@ -8,6 +9,13 @@ fn lol(a: Timestamp) -> DateTime<Utc> {
 #[derive(Debug)]
 #[brick(converter = "From", source_struct = "Bar")]
 struct Foo {
+    name: String,
+    #[brick_field(convert_field_func = "lol")]
+    ts: DateTime<Utc>,
+}
+
+#[brick(converter = "TryFrom", source_struct = "Bar", try_error_kind = "std::io::Error")]
+struct TryFroo {
     name: String,
     #[brick_field(convert_field_func = "lol")]
     ts: DateTime<Utc>,

@@ -1,4 +1,3 @@
-// Inspire from https://github.com/shrynx/struct_morph/tree/main
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
@@ -6,10 +5,11 @@ use syn::{
     parse::{Parse, ParseStream, Result},
     parse_macro_input,
     spanned::Spanned,
-    Ident, ItemStruct, LitStr, Token,
+    Ident, ItemStruct, LitStr, Token, Type,
 };
+use proc_macro2::Span;
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 enum ConverterType {
     #[default]
     From,
@@ -20,25 +20,38 @@ enum ConverterType {
 struct BrikStructAttributes {
     converter: ConverterType,
     source_struct: Option<LitStr>,
+    error_kind: Option<LitStr>
 }
 
 impl BrikStructAttributes {
     fn parse(&mut self, meta: ParseNestedMeta) -> Result<()> {
-        if meta.path.is_ident("converter") {
-            let converter: LitStr = meta.value()?.parse()?;
-            self.converter = match converter.value().as_str() {
-                "From" => ConverterType::From,
-                "TryFrom" => ConverterType::TryFrom,
-                _ => ConverterType::From,
-            };
+        if meta.path.get_ident().is_none() {
+            return Err(syn::Error::new(meta.path.span(), "Unknown attribute"));
+        }
+        
+        let ident = meta.path.get_ident().unwrap();
+        match ident.to_string().as_str() {
+            "converter" => {
+                let converter: LitStr = meta.value()?.parse()?;
+                self.converter = match converter.value().as_str() {
+                    "From" => ConverterType::From,
+                    "TryFrom" => ConverterType::TryFrom,
+                    _ => ConverterType::From,
+                };
 
-            Ok(())
-        } else if meta.path.is_ident("source_struct") {
-            self.source_struct = Some(meta.value()?.parse()?);
+                Ok(())
+            }
+            "source_struct" => {
+                self.source_struct = meta.value()?.parse()?;
 
-            Ok(())
-        } else {
-            Err(syn::Error::new(meta.path.span(), "Unknown attribute"))
+                Ok(())
+            }
+            "try_error_kind" => {
+                self.error_kind = Some(meta.value()?.parse()?);
+
+                Ok(())
+            }
+            _ => Err(syn::Error::new(ident.span(), "Unknown attribute")),
         }
     }
 }
@@ -71,7 +84,12 @@ fn create_expanded(
     target_name: Ident,
     de_fields: Vec<proc_macro2::TokenStream>,
 ) -> proc_macro2::TokenStream {
-    let source = format_ident!("{}", attr.source_struct.unwrap().value());
+    let source = Ident::new(&attr
+        .source_struct
+        .expect("Expect source_struct to contain the source struct")
+        .value(),
+        Span::call_site()
+    );
 
     // [From, SourceStructName]
     let expanded = match attr.converter {
@@ -84,17 +102,22 @@ fn create_expanded(
                }
            }
         },
-        ConverterType::TryFrom => quote! {
-           impl TryFrom<#source> for #target_name {
-               type Error = Result<Self, Self::Error>;
+        ConverterType::TryFrom => {
+            let error_kind = attr.error_kind.expect("Expect try_error_kind to be provided");
+            let error_kind_ident: Type = syn::parse_str(&error_kind.value()).expect("Expect to parse error_kind");
 
-               fn try_from(arg: #source) -> Result<Self, Self::Error> {
-                   Ok(Self {
-                    #(#de_fields),*
-                   })
-               }
-           }
-        },
+            quote! {
+                impl TryFrom<#source> for #target_name {
+                    type Error = #error_kind_ident;
+     
+                    fn try_from(arg: #source) -> Result<Self, Self::Error> {
+                        Ok(Self {
+                         #(#de_fields),*
+                        })
+                    }
+                }
+             }
+        }
     };
 
     proc_macro2::TokenStream::from(expanded)
@@ -121,10 +144,10 @@ pub fn brick(args: TokenStream, target: TokenStream) -> TokenStream {
 
             match fields_args {
                 Some(BrickFieldArgs::ConvertFieldFn(convert_field)) => {
-                    let f = format_ident!("{}", convert_field.value());
+                    let func = Ident::new(&convert_field.value(), Span::call_site());
 
                     proc_macro2::TokenStream::from(quote! {
-                        #field_name: #f(arg.#field_name)
+                        #field_name: #func(arg.#field_name)
                     })
                 }
                 _ => proc_macro2::TokenStream::from(quote! { #field_name: arg.#field_name }),
