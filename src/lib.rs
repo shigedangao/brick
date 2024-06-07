@@ -1,5 +1,6 @@
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
+use proc_macro2::Span;
+use quote::quote;
 use syn::{
     meta::ParseNestedMeta,
     parse::{Parse, ParseStream, Result},
@@ -7,7 +8,6 @@ use syn::{
     spanned::Spanned,
     Ident, ItemStruct, LitStr, Token, Type,
 };
-use proc_macro2::Span;
 
 #[derive(Default, PartialEq)]
 enum ConverterType {
@@ -16,11 +16,15 @@ enum ConverterType {
     TryFrom,
 }
 
+enum BrickFieldArgs {
+    ConvertFieldFn(LitStr),
+}
+
 #[derive(Default)]
 struct BrikStructAttributes {
     converter: ConverterType,
     source_struct: Option<LitStr>,
-    error_kind: Option<LitStr>
+    error_kind: Option<LitStr>,
 }
 
 impl BrikStructAttributes {
@@ -28,7 +32,7 @@ impl BrikStructAttributes {
         if meta.path.get_ident().is_none() {
             return Err(syn::Error::new(meta.path.span(), "Unknown attribute"));
         }
-        
+
         let ident = meta.path.get_ident().unwrap();
         match ident.to_string().as_str() {
             "converter" => {
@@ -56,10 +60,6 @@ impl BrikStructAttributes {
     }
 }
 
-enum BrickFieldArgs {
-    ConvertFieldFn(LitStr),
-}
-
 impl Parse for BrickFieldArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let keyword: Ident = input.parse()?;
@@ -84,11 +84,12 @@ fn create_expanded(
     target_name: Ident,
     de_fields: Vec<proc_macro2::TokenStream>,
 ) -> proc_macro2::TokenStream {
-    let source = Ident::new(&attr
-        .source_struct
-        .expect("Expect source_struct to contain the source struct")
-        .value(),
-        Span::call_site()
+    let source = Ident::new(
+        &attr
+            .source_struct
+            .expect("Expect source_struct to contain the source struct")
+            .value(),
+        Span::call_site(),
     );
 
     // [From, SourceStructName]
@@ -97,26 +98,29 @@ fn create_expanded(
            impl From<#source> for #target_name {
                fn from(arg: #source) -> Self {
                    Self {
-                    #(#de_fields),*
+                        #(#de_fields),*
                    }
                }
            }
         },
         ConverterType::TryFrom => {
-            let error_kind = attr.error_kind.expect("Expect try_error_kind to be provided");
-            let error_kind_ident: Type = syn::parse_str(&error_kind.value()).expect("Expect to parse error_kind");
+            let error_kind = attr
+                .error_kind
+                .expect("Expect try_error_kind to be provided");
+            let error_kind_ident: Type =
+                syn::parse_str(&error_kind.value()).expect("Expect to parse error_kind");
 
             quote! {
-                impl TryFrom<#source> for #target_name {
-                    type Error = #error_kind_ident;
-     
-                    fn try_from(arg: #source) -> Result<Self, Self::Error> {
-                        Ok(Self {
-                         #(#de_fields),*
-                        })
-                    }
-                }
-             }
+               impl TryFrom<#source> for #target_name {
+                   type Error = #error_kind_ident;
+
+                   fn try_from(arg: #source) -> Result<Self, Self::Error> {
+                       Ok(Self {
+                            #(#de_fields),*
+                       })
+                   }
+               }
+            }
         }
     };
 
@@ -157,7 +161,7 @@ pub fn brick(args: TokenStream, target: TokenStream) -> TokenStream {
 
     let mut input_clone = input.clone();
 
-    // Dunno why it's needed. Maybe to remove the attribute to avoid any output in the AST ?
+    // Use to remove the attributes brick_field from the AST so that it doesn't get printed
     input_clone.fields.iter_mut().for_each(|field| {
         field
             .attrs
