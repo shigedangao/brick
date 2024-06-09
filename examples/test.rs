@@ -1,4 +1,4 @@
-use brick::{brick, brick_field};
+use brick::brick;
 use chrono::{DateTime, Utc};
 
 fn lol(a: Timestamp) -> DateTime<Utc> {
@@ -6,24 +6,16 @@ fn lol(a: Timestamp) -> DateTime<Utc> {
 }
 
 #[derive(Debug)]
-#[brick(converter = "From", source_struct = "Bar")]
-struct Foo {
-    name: String,
-    #[brick_field(convert_field_func = "lol")]
-    ts: DateTime<Utc>,
-}
-
 #[brick(
     converter = "TryFrom",
     source_struct = "Bar",
     try_error_kind = "std::io::Error"
 )]
-struct TryFroo {
+struct Foo {
     name: String,
-    #[brick_field(convert_field_func = "lol")]
+    #[brick_field(transform_func = "lol")]
     ts: DateTime<Utc>,
 }
-
 struct Bar {
     name: String,
     ts: Timestamp,
@@ -31,6 +23,16 @@ struct Bar {
 
 struct Timestamp {
     seconds: i64,
+}
+
+enum Source {
+    A,
+}
+
+#[derive(Debug)]
+#[brick(converter = "From", source_enum = "Source")]
+enum Target {
+    A,
 }
 
 fn main() {
@@ -41,6 +43,12 @@ fn main() {
         },
     };
 
-    let foo = Foo::from(b);
+    let foo = Foo::try_from(b);
+
     dbg!(foo);
+
+    let o = Source::A;
+    let res = Target::from(o);
+
+    dbg!(res);
 }
