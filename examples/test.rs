@@ -13,8 +13,8 @@ fn lol(a: Timestamp) -> DateTime<Utc> {
 )]
 struct Foo {
     name: String,
-    #[brick_field(transform_func = "lol")]
-    ts: DateTime<Utc>,
+    #[brick_field(transform_func = "lol", rename = "ts")]
+    timestamp: DateTime<Utc>,
 }
 struct Bar {
     name: String,
