@@ -1,22 +1,23 @@
 use brick::brick;
 use chrono::{DateTime, Utc};
 
-fn lol(a: Timestamp) -> DateTime<Utc> {
+fn convert_ts_to_datetime(a: Timestamp) -> DateTime<Utc> {
     DateTime::from_timestamp(a.seconds, 0).unwrap()
 }
 
 #[derive(Debug)]
 #[brick(
     converter = "TryFrom",
-    source_struct = "Bar",
+    source_struct = "Source",
     try_error_kind = "std::io::Error"
 )]
-struct Foo {
+struct Target {
     name: String,
-    #[brick_field(transform_func = "lol", rename = "ts")]
+    #[brick_field(transform_func = "convert_ts_to_datetime", rename = "ts")]
     timestamp: DateTime<Utc>,
 }
-struct Bar {
+
+struct Source {
     name: String,
     ts: Timestamp,
 }
@@ -25,30 +26,30 @@ struct Timestamp {
     seconds: i64,
 }
 
-enum Source {
+enum SourceEnum {
     A,
 }
 
 #[derive(Debug)]
-#[brick(converter = "From", source_enum = "Source")]
-enum Target {
+#[brick(converter = "From", source_enum = "SourceEnum")]
+enum TargetEnum {
     A,
 }
 
 fn main() {
-    let b = Bar {
-        name: "Joe".to_string(),
+    let b = Source {
+        name: "Dodoooo".to_string(),
         ts: Timestamp {
             seconds: 1717708136,
         },
     };
 
-    let foo = Foo::try_from(b);
+    let foo = Target::try_from(b);
 
     dbg!(foo);
 
-    let o = Source::A;
-    let res = Target::from(o);
+    let o = SourceEnum::A;
+    let res = TargetEnum::from(o);
 
     dbg!(res);
 }
