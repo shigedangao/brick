@@ -17,6 +17,9 @@ struct Target {
     #[brick_field(transform_func = "convert_ts_to_datetime", rename = "ts")]
     #[allow(dead_code)]
     timestamp: DateTime<Utc>,
+    #[brick_field(exclude = true)]
+    #[allow(dead_code)]
+    excluded: bool,
 }
 
 struct Source {
