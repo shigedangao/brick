@@ -1,8 +1,4 @@
-# Brick 🧱 (just a prototype)
-
-<p align="center">
-    <img src="https://mangez-moi.fr/wp-content/uploads/2018/08/Brick-tunisienne-au-thon-et-oeuf-coulant.jpg" width="200px">
-</p>
+# Brick 🧱
 
 A proc-macro inspired from [struct_morph](https://github.com/shrynx/struct_morph/tree/main) to convert from a type using From or TryFrom for the targeted struct
 

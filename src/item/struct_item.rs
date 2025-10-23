@@ -1,6 +1,7 @@
 use super::ProcessItem;
 use crate::attributes::BrickAttributes;
 use crate::fields::BrickFieldArgs;
+use crate::item::SupportedType;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::punctuated::Punctuated;
@@ -9,7 +10,7 @@ use syn::{ItemStruct, Token};
 const FIELD_NAME: &str = "brick_field";
 
 impl ProcessItem for ItemStruct {
-    fn process_item(&mut self, attrs: BrickAttributes) -> TokenStream {
+    fn process(&mut self, attrs: BrickAttributes, supported_type: SupportedType) -> TokenStream {
         let mut processed_fields = Vec::new();
 
         for field in self.fields.clone() {
@@ -33,7 +34,11 @@ impl ProcessItem for ItemStruct {
             field.attrs.retain(|attr| !attr.path().is_ident(FIELD_NAME));
         });
 
-        let expanded = attrs.create_ops_template(self.ident.clone(), processed_fields);
+        let expanded = attrs.generate_conversion_template(
+            self.ident.clone(),
+            processed_fields,
+            supported_type,
+        );
 
         quote! {
             #self

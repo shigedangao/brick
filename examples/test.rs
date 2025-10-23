@@ -8,12 +8,14 @@ fn convert_ts_to_datetime(a: Timestamp) -> DateTime<Utc> {
 #[derive(Debug)]
 #[brick(
     converter = "TryFrom",
-    source_struct = "Source",
+    source = "Source",
     try_error_kind = "std::io::Error"
 )]
 struct Target {
+    #[allow(dead_code)]
     name: String,
     #[brick_field(transform_func = "convert_ts_to_datetime", rename = "ts")]
+    #[allow(dead_code)]
     timestamp: DateTime<Utc>,
 }
 
@@ -31,7 +33,7 @@ enum SourceEnum {
 }
 
 #[derive(Debug)]
-#[brick(converter = "From", source_enum = "SourceEnum")]
+#[brick(converter = "From", source = "SourceEnum")]
 enum TargetEnum {
     A,
 }
@@ -45,11 +47,10 @@ fn main() {
     };
 
     let foo = Target::try_from(b);
-
-    dbg!(foo);
+    println!("{:?}", foo);
 
     let o = SourceEnum::A;
     let res = TargetEnum::from(o);
 
-    dbg!(res);
+    println!("{:?}", res);
 }

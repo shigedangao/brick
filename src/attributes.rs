@@ -1,6 +1,7 @@
+use crate::item::SupportedType;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{meta::ParseNestedMeta, spanned::Spanned, Ident, LitStr, Result, Type};
+use syn::{Ident, LitStr, Result, Type, meta::ParseNestedMeta, spanned::Spanned};
 
 #[derive(Default, PartialEq)]
 pub enum ConverterType {
@@ -9,11 +10,16 @@ pub enum ConverterType {
     TryFrom,
 }
 
+/// BrickAttributes is a struct that holds the attributes for the brick proc macro.
+///
+/// - Converter refers to the type of conversion to be performed (From or TryFrom) default = From
+/// - source_struct refers to the struct that the brick will be converted from
+/// - source_enum refers to the enum that the brick will be converted from
+/// - error_kind refers to the error kind that will be returned if the conversion fails (use in conjunction with TryFrom)
 #[derive(Default)]
 pub struct BrickAttributes {
     pub converter: ConverterType,
-    pub source_struct: Option<Ident>,
-    pub source_enum: Option<Ident>,
+    pub source: Option<Ident>,
     pub error_kind: Option<LitStr>,
 }
 
@@ -35,18 +41,10 @@ impl BrickAttributes {
 
                 Ok(())
             }
-            "source_struct" => {
-                let source_struct: Option<LitStr> = meta.value()?.parse()?;
-                if let Some(src) = source_struct {
-                    self.source_struct = Some(Ident::new(&src.value(), Span::call_site()));
-                }
-
-                Ok(())
-            }
-            "source_enum" => {
-                let source_enum: Option<LitStr> = meta.value()?.parse()?;
-                if let Some(src) = source_enum {
-                    self.source_enum = Some(Ident::new(&src.value(), Span::call_site()));
+            "source" => {
+                let source: Option<LitStr> = meta.value()?.parse()?;
+                if let Some(src) = source {
+                    self.source = Some(Ident::new(&src.value(), Span::call_site()))
                 }
 
                 Ok(())
@@ -66,29 +64,31 @@ impl BrickAttributes {
     ///
     /// * `target_ident` - The target struct identifier
     /// * `transform_fields` - The transformed fields
-    pub fn create_ops_template(
+    pub fn generate_conversion_template(
         &self,
         target_ident: Ident,
         transform_fields: Vec<TokenStream>,
+        supported_type: SupportedType,
     ) -> TokenStream {
-        let (source, fields) = if let Some(source_struct) = &self.source_struct {
-            (
-                source_struct,
-                quote! {
-                    Self {
+        let (source, fields) = if let Some(source) = &self.source {
+            match supported_type {
+                SupportedType::Struct => (
+                    source,
+                    quote! {
+                        Self {
+                            #(#transform_fields),*
+                        }
+                    },
+                ),
+                SupportedType::Enum => (
+                    source,
+                    quote! {
                         #(#transform_fields),*
-                    }
-                },
-            )
-        } else if let Some(source_enum) = &self.source_enum {
-            (
-                source_enum,
-                quote! {
-                    #(#transform_fields),*
-                },
-            )
+                    },
+                ),
+            }
         } else {
-            panic!("Expect source_struct or source_enum to be provided");
+            unimplemented!("Expect supported_type to be a struct or an enum")
         };
 
         match self.converter {

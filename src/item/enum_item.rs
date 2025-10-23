@@ -1,10 +1,14 @@
 use super::ProcessItem;
-use crate::attributes::BrickAttributes;
+use crate::{attributes::BrickAttributes, item::SupportedType};
 use quote::quote;
 use syn::ItemEnum;
 
 impl ProcessItem for ItemEnum {
-    fn process_item(&mut self, attrs: BrickAttributes) -> proc_macro2::TokenStream {
+    fn process(
+        &mut self,
+        attrs: BrickAttributes,
+        supported_type: SupportedType,
+    ) -> proc_macro2::TokenStream {
         let target = self.ident.clone();
         let variants = self.variants.clone();
 
@@ -12,13 +16,17 @@ impl ProcessItem for ItemEnum {
             .into_iter()
             .map(|var| {
                 let field_name = var.ident;
-                attrs.create_ops_template(target.clone(), vec![quote! { Self::#field_name }])
+                attrs.generate_conversion_template(
+                    target.clone(),
+                    vec![quote! { Self::#field_name }],
+                    supported_type.clone(),
+                )
             })
             .collect::<Vec<_>>();
 
-        proc_macro2::TokenStream::from(quote! {
+        quote! {
             #self
             #(#variants)*
-        })
+        }
     }
 }
