@@ -49,12 +49,15 @@ struct Timestamp {
 
 enum SourceEnum {
     A,
+    C,
 }
 
 #[derive(Debug)]
 #[brick(converter = "From", source = "SourceEnum")]
 enum TargetEnum {
     A,
+    #[brick_field(rename = "C")]
+    B,
 }
 
 fn main() {

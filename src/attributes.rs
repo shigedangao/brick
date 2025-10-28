@@ -13,8 +13,7 @@ pub enum ConverterType {
 /// BrickAttributes is a struct that holds the attributes for the brick proc macro.
 ///
 /// - Converter refers to the type of conversion to be performed (From or TryFrom) default = From
-/// - source_struct refers to the struct that the brick will be converted from
-/// - source_enum refers to the enum that the brick will be converted from
+/// - source refers to the struct or enum that the brick will be converted from
 /// - error_kind refers to the error kind that will be returned if the conversion fails (use in conjunction with TryFrom)
 #[derive(Default)]
 pub struct BrickAttributes {
@@ -83,7 +82,9 @@ impl BrickAttributes {
                 SupportedType::Enum => (
                     source,
                     quote! {
-                        #(#transform_fields),*
+                        match arg {
+                            #(#transform_fields),*
+                        }
                     },
                 ),
             }

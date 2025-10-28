@@ -1,7 +1,8 @@
 use crate::attributes::BrickAttributes;
-
 pub mod enum_item;
 pub mod struct_item;
+
+const FIELD_NAME: &str = "brick_field";
 
 #[derive(Clone)]
 pub enum SupportedType {

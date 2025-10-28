@@ -29,7 +29,12 @@ impl Parse for BrickFieldArgs {
 }
 
 impl BrickFieldArgs {
-    pub(crate) fn create_template(name: Ident, fields: Vec<Self>) -> TokenStream {
+    /// Create the struct template which will be used inside the field to map the path src: target
+    ///
+    /// # Arguments
+    /// * `name` - The name of the struct template.
+    /// * `fields` - The fields of the struct template.
+    pub(crate) fn create_struct_template(name: Ident, fields: Vec<Self>) -> TokenStream {
         let mut from_field_name: Option<Ident> = Some(name.clone());
         let mut fn_from_extern: Option<syn::Ident> = None;
         let mut func: Option<Ident> = None;
@@ -84,6 +89,40 @@ impl BrickFieldArgs {
                     },
                 },
                 None => quote! { #name: arg.#from_field_name },
+            },
+        }
+    }
+
+    /// Create the enum template which will be used inside the field to map the path src: target within a match statement.
+    ///
+    /// # Arguments
+    /// * `name` - The name of the enum template.
+    /// * `source` - The source of the enum template.
+    /// * `fields` - The fields of the enum template.
+    pub fn create_enum_template(
+        name: Ident,
+        source: Option<Ident>,
+        fields: Vec<Self>,
+    ) -> TokenStream {
+        let mut rename: Option<Ident> = Some(name.clone());
+        let mut to_skip = false;
+
+        for field in fields {
+            if let Self::Rename(rename_field) = field.to_owned() {
+                rename = Some(Ident::new(&rename_field.value(), Span::call_site()));
+            }
+
+            if let Self::Exclude(e) = field.to_owned()
+                && e.value()
+            {
+                to_skip = true;
+            }
+        }
+
+        match to_skip {
+            true => quote! {},
+            false => quote! {
+                #source::#rename => Self::#name
             },
         }
     }
