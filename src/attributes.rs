@@ -69,6 +69,7 @@ impl BrickAttributes {
         transform_fields: Vec<TokenStream>,
         supported_type: SupportedType,
     ) -> TokenStream {
+        // Generate the conversion template for the list of fields that has been transformed
         let (source, fields) = if let Some(source) = &self.source {
             match supported_type {
                 SupportedType::Struct => (
@@ -79,6 +80,7 @@ impl BrickAttributes {
                         }
                     },
                 ),
+                // In the case of the enum we want to use the match expression to convert the source enum to the target enum
                 SupportedType::Enum => (
                     source,
                     quote! {

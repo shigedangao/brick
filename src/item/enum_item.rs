@@ -2,8 +2,11 @@ use super::ProcessItem;
 use crate::fields::BrickFieldArgs;
 use crate::item::FIELD_NAME;
 use crate::{attributes::BrickAttributes, item::SupportedType};
+use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{ItemEnum, Token, punctuated::Punctuated};
+use syn::Ident;
+use syn::spanned::Spanned;
+use syn::{Fields, ItemEnum, Token, punctuated::Punctuated};
 
 impl ProcessItem for ItemEnum {
     fn process(
@@ -17,8 +20,9 @@ impl ProcessItem for ItemEnum {
         for item in self.variants.clone() {
             let field_name = item.ident;
 
-            let mut field_attrs = Vec::new();
+            let enum_inner_fields = process_enum_inner_fields(item.fields);
 
+            let mut field_attrs = Vec::new();
             for attr in item.attrs {
                 if attr.path().is_ident(super::FIELD_NAME) {
                     let meta: Punctuated<BrickFieldArgs, Token![,]> =
@@ -32,6 +36,7 @@ impl ProcessItem for ItemEnum {
                 field_name,
                 attrs.source.clone(),
                 field_attrs,
+                enum_inner_fields,
             ));
         }
 
@@ -47,5 +52,37 @@ impl ProcessItem for ItemEnum {
             #self
             #expanded
         }
+    }
+}
+
+/// Process the enum fields e.g Enum::Variant(arg1, arg2)
+///
+/// # Description
+/// This function will take the enum fields and process them into a TokenStream
+/// - Unnamed fields will generate a tuple of arguments in the following format (arg_0, arg_1, ...)
+/// - Unit will just produce an empty TokenStream
+/// - Named fields will generate a tuple of arguments in the following format (arg_0, arg_1, ...)
+///
+/// /!\ Named fields are not supported yet
+fn process_enum_inner_fields(fields: Fields) -> TokenStream {
+    let enum_arg_fields: Vec<TokenStream> = match fields {
+        Fields::Unnamed(un) => un
+            .unnamed
+            .into_iter()
+            .enumerate()
+            .map(|(idx, field)| {
+                let ident = Ident::new(&format!("arg_{}", idx), field.span());
+
+                quote! { #ident }
+            })
+            .collect(),
+        _ => vec![],
+    };
+
+    match enum_arg_fields.is_empty() {
+        true => quote! {},
+        false => quote! {
+            (#(#enum_arg_fields),*)
+        },
     }
 }

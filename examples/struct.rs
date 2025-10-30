@@ -1,17 +1,23 @@
 use brick::brick;
 use chrono::{DateTime, Utc};
 
+// A dummy module to show that we can use a function from another module
 mod utils {
     pub fn append_hello(input: String) -> String {
         format!("Hello, {}", input)
     }
 }
 
+// Convert a timestamp to a chrono DateTime
 fn convert_ts_to_datetime(a: Timestamp) -> Result<DateTime<Utc>, std::io::Error> {
     DateTime::from_timestamp(a.seconds, 0).ok_or(std::io::Error::new(
         std::io::ErrorKind::Other,
         "Failed to convert timestamp to datetime",
     ))
+}
+
+struct Timestamp {
+    seconds: i64,
 }
 
 struct Source {
@@ -43,23 +49,6 @@ struct Target {
     hello: String,
 }
 
-struct Timestamp {
-    seconds: i64,
-}
-
-enum SourceEnum {
-    A,
-    C,
-}
-
-#[derive(Debug)]
-#[brick(converter = "From", source = "SourceEnum")]
-enum TargetEnum {
-    A,
-    #[brick_field(rename = "C")]
-    B,
-}
-
 fn main() {
     let b = Source {
         name: "Doudou".to_string(),
@@ -70,11 +59,5 @@ fn main() {
     };
 
     let foo = Target::try_from(b);
-    println!("{:?}", foo);
     assert_eq!(foo.unwrap().hello, "Hello, doudou");
-
-    let o = SourceEnum::A;
-    let res = TargetEnum::from(o);
-
-    println!("{:?}", res);
 }

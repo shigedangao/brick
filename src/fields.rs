@@ -103,9 +103,12 @@ impl BrickFieldArgs {
         name: Ident,
         source: Option<Ident>,
         fields: Vec<Self>,
+        enum_fields: TokenStream,
     ) -> TokenStream {
         let mut rename: Option<Ident> = Some(name.clone());
         let mut to_skip = false;
+        let mut func: Option<Ident> = None;
+        let mut fn_from_extern: Option<Ident> = None;
 
         for field in fields {
             if let Self::Rename(rename_field) = field.to_owned() {
@@ -117,12 +120,30 @@ impl BrickFieldArgs {
             {
                 to_skip = true;
             }
+
+            if let Self::ConvertFieldFn(fn_field) = field.to_owned() {
+                func = Some(Ident::new(&fn_field.value(), Span::call_site()));
+            }
+
+            if let Self::FnFromExtern(t) = field.to_owned() {
+                fn_from_extern = Some(Ident::new(&t.value(), Span::call_site()));
+            }
         }
 
         match to_skip {
             true => quote! {},
-            false => quote! {
-                #source::#rename => Self::#name
+            false => match func {
+                Some(f) => match fn_from_extern {
+                    Some(ext) => quote! {
+                        #source::#rename #enum_fields => #ext:: #f #enum_fields
+                    },
+                    None => quote! {
+                        #source::#rename #enum_fields => #f #enum_fields
+                    },
+                },
+                None => quote! {
+                    #source::#rename => Self::#name
+                },
             },
         }
     }
