@@ -8,6 +8,12 @@ use syn::Ident;
 use syn::spanned::Spanned;
 use syn::{Fields, ItemEnum, Token, punctuated::Punctuated};
 
+#[derive(Debug, Default)]
+pub struct EnumInnerFields {
+    unnamed: TokenStream,
+    named: TokenStream,
+}
+
 impl ProcessItem for ItemEnum {
     fn process(
         &mut self,
@@ -19,8 +25,7 @@ impl ProcessItem for ItemEnum {
         let mut field_tk = Vec::new();
         for item in self.variants.clone() {
             let field_name = item.ident;
-
-            let enum_inner_fields = process_enum_inner_fields(item.fields);
+            let parsed_enum_fields = process_enum_inner_fields(item.fields);
 
             let mut field_attrs = Vec::new();
             for attr in item.attrs {
@@ -36,7 +41,8 @@ impl ProcessItem for ItemEnum {
                 field_name,
                 attrs.source.clone(),
                 field_attrs,
-                enum_inner_fields,
+                parsed_enum_fields.unnamed,
+                parsed_enum_fields.named,
             ));
         }
 
@@ -64,25 +70,45 @@ impl ProcessItem for ItemEnum {
 /// - Named fields will generate a tuple of arguments in the following format (arg_0, arg_1, ...)
 ///
 /// /!\ Named fields are not supported yet
-fn process_enum_inner_fields(fields: Fields) -> TokenStream {
-    let enum_arg_fields: Vec<TokenStream> = match fields {
-        Fields::Unnamed(un) => un
-            .unnamed
-            .into_iter()
-            .enumerate()
-            .map(|(idx, field)| {
-                let ident = Ident::new(&format!("arg_{}", idx), field.span());
+fn process_enum_inner_fields(fields: Fields) -> EnumInnerFields {
+    match fields {
+        Fields::Unnamed(un) => {
+            let parsed_fields: Vec<TokenStream> = un
+                .unnamed
+                .into_iter()
+                .enumerate()
+                .map(|(idx, field)| {
+                    let ident = Ident::new(&format!("arg_{}", idx), field.span());
 
-                quote! { #ident }
-            })
-            .collect(),
-        _ => vec![],
-    };
+                    quote! { #ident }
+                })
+                .collect();
 
-    match enum_arg_fields.is_empty() {
-        true => quote! {},
-        false => quote! {
-            (#(#enum_arg_fields),*)
-        },
+            EnumInnerFields {
+                unnamed: quote! {(#(#parsed_fields),*)},
+                named: quote! {},
+            }
+        }
+        // Return the same TokenStream for the name fields
+        Fields::Named(nfields) => {
+            let parsed_nfields: Vec<TokenStream> = nfields
+                .named
+                .into_iter()
+                .enumerate()
+                .map(|(idx, field)| match field.ident {
+                    Some(ident) => {
+                        let id = Ident::new(&ident.to_string(), ident.span());
+                        quote! { #id }
+                    }
+                    None => quote! { #idx },
+                })
+                .collect();
+
+            EnumInnerFields {
+                unnamed: quote! {},
+                named: quote! {#(#parsed_nfields),*},
+            }
+        }
+        _ => EnumInnerFields::default(),
     }
 }

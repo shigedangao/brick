@@ -103,7 +103,8 @@ impl BrickFieldArgs {
         name: Ident,
         source: Option<Ident>,
         fields: Vec<Self>,
-        enum_fields: TokenStream,
+        unnamed_enum_fields: TokenStream,
+        named_enum_fields: TokenStream,
     ) -> TokenStream {
         let mut rename: Option<Ident> = Some(name.clone());
         let mut to_skip = false;
@@ -135,15 +136,23 @@ impl BrickFieldArgs {
             false => match func {
                 Some(f) => match fn_from_extern {
                     Some(ext) => quote! {
-                        #source::#rename #enum_fields => #ext:: #f #enum_fields
+                        #source::#rename #unnamed_enum_fields => #ext:: #f #unnamed_enum_fields
                     },
                     None => quote! {
-                        #source::#rename #enum_fields => #f #enum_fields
+                        #source::#rename #unnamed_enum_fields => #f #unnamed_enum_fields
                     },
                 },
-                None => quote! {
-                    #source::#rename => Self::#name
-                },
+                None => {
+                    if named_enum_fields.is_empty() {
+                        quote! {
+                            #source::#rename => Self::#name
+                        }
+                    } else {
+                        quote! {
+                            #source::#rename{#named_enum_fields} => Self::#name {#named_enum_fields}
+                        }
+                    }
+                }
             },
         }
     }

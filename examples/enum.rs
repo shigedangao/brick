@@ -3,12 +3,15 @@ use brick::brick;
 fn process_enum_content(msg: String) -> TargetEnum {
     TargetEnum::Oddo(format!("hello, 你好， ສະບາຍດີ {msg}"))
 }
-
 enum SourceEnum {
     Foo,
     #[allow(dead_code)]
     Bar,
     Nado(String),
+    Naming {
+        firstname: String,
+        lastname: String,
+    },
 }
 
 #[derive(Debug)]
@@ -19,6 +22,11 @@ enum TargetEnum {
     B,
     #[brick_field(rename = "Nado", transform_func = "process_enum_content")]
     Oddo(String),
+    #[brick_field(rename = "Naming")]
+    Name {
+        firstname: String,
+        lastname: String,
+    },
 }
 
 fn main() {
