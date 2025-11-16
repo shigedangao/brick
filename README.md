@@ -137,3 +137,11 @@ fn main() {
     }
 }
 ```
+
+## Debugging
+
+Should you want to debug the output of the generated code. You can use the command [cargo expand](https://github.com/dtolnay/cargo-expand) like the example below:
+
+```
+cargo run --example enum
+```

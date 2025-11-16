@@ -94,6 +94,8 @@ impl BrickFieldArgs {
     }
 
     /// Create the enum template which will be used inside the field to map the path src: target within a match statement.
+    /// This will create an enum value for "each statement" e.g:
+    ///    - Source::Foo => Target::Foo
     ///
     /// # Arguments
     /// * `name` - The name of the enum template.
@@ -134,14 +136,14 @@ impl BrickFieldArgs {
         match to_skip {
             true => quote! {},
             false => match func {
-                Some(f) => match fn_from_extern {
-                    Some(ext) => quote! {
-                        #source::#rename #unnamed_enum_fields => #ext:: #f #unnamed_enum_fields
-                    },
-                    None => quote! {
-                        #source::#rename #unnamed_enum_fields => #f #unnamed_enum_fields
-                    },
-                },
+                Some(f) => enum_builder::generate_enum_fn(
+                    source,
+                    rename,
+                    fn_from_extern,
+                    f,
+                    unnamed_enum_fields,
+                    named_enum_fields,
+                ),
                 None => {
                     if named_enum_fields.is_empty() {
                         quote! {
@@ -153,6 +155,55 @@ impl BrickFieldArgs {
                         }
                     }
                 }
+            },
+        }
+    }
+}
+
+mod enum_builder {
+    use super::*;
+
+    pub fn generate_enum_fn(
+        source: Option<Ident>,
+        rename: Option<Ident>,
+        extern_fn: Option<Ident>,
+        fn_tmpl: Ident,
+        unnamed_enum_fields: TokenStream,
+        named_enum_fields: TokenStream,
+    ) -> TokenStream {
+        let (match_ident, fn_args) = if !unnamed_enum_fields.is_empty() {
+            (
+                quote! {
+                    #unnamed_enum_fields
+                },
+                quote! {
+                    #unnamed_enum_fields
+                },
+            )
+        } else if !named_enum_fields.is_empty() {
+            (
+                quote! {
+                    {#named_enum_fields}
+                },
+                quote! {
+                    (#named_enum_fields)
+                },
+            )
+        } else {
+            (
+                quote! {},
+                quote! {
+                    (#source::#rename)
+                },
+            )
+        };
+
+        match extern_fn {
+            Some(ext) => quote! {
+                #source::#rename #match_ident => #ext:: #fn_tmpl #fn_args
+            },
+            None => quote! {
+                #source::#rename #match_ident => #fn_tmpl #fn_args
             },
         }
     }
