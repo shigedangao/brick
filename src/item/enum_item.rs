@@ -8,10 +8,11 @@ use syn::Ident;
 use syn::spanned::Spanned;
 use syn::{Fields, ItemEnum, Token, punctuated::Punctuated};
 
-#[derive(Debug, Default)]
-pub struct EnumInnerFields {
-    unnamed: TokenStream,
-    named: TokenStream,
+#[derive(Debug)]
+pub enum EnumInnerFields {
+    Unnamed(TokenStream),
+    Named(TokenStream),
+    Unit,
 }
 
 impl ProcessItem for ItemEnum {
@@ -41,8 +42,7 @@ impl ProcessItem for ItemEnum {
                 field_name,
                 attrs.source.clone(),
                 field_attrs,
-                parsed_enum_fields.unnamed,
-                parsed_enum_fields.named,
+                parsed_enum_fields,
             ));
         }
 
@@ -84,10 +84,7 @@ fn process_enum_inner_fields(fields: Fields) -> EnumInnerFields {
                 })
                 .collect();
 
-            EnumInnerFields {
-                unnamed: quote! {(#(#parsed_fields),*)},
-                named: quote! {},
-            }
+            EnumInnerFields::Unnamed(quote! {(#(#parsed_fields),*)})
         }
         // Return the same TokenStream for the name fields
         Fields::Named(nfields) => {
@@ -104,11 +101,8 @@ fn process_enum_inner_fields(fields: Fields) -> EnumInnerFields {
                 })
                 .collect();
 
-            EnumInnerFields {
-                unnamed: quote! {},
-                named: quote! {#(#parsed_nfields),*},
-            }
+            EnumInnerFields::Named(quote! {#(#parsed_nfields),*})
         }
-        _ => EnumInnerFields::default(),
+        _ => EnumInnerFields::Unit,
     }
 }

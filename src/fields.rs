@@ -1,3 +1,4 @@
+use crate::item::enum_item::EnumInnerFields;
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -105,8 +106,7 @@ impl BrickFieldArgs {
         name: Ident,
         source: Option<Ident>,
         fields: Vec<Self>,
-        unnamed_enum_fields: TokenStream,
-        named_enum_fields: TokenStream,
+        enum_fields: EnumInnerFields,
     ) -> TokenStream {
         let mut rename: Option<Ident> = Some(name.clone());
         let mut to_skip = false;
@@ -136,25 +136,26 @@ impl BrickFieldArgs {
         match to_skip {
             true => quote! {},
             false => match func {
-                Some(f) => enum_builder::generate_enum_fn(
-                    source,
-                    rename,
-                    fn_from_extern,
-                    f,
-                    unnamed_enum_fields,
-                    named_enum_fields,
-                ),
-                None => {
-                    if named_enum_fields.is_empty() {
+                Some(f) => {
+                    enum_builder::generate_enum_fn(source, rename, fn_from_extern, f, &enum_fields)
+                }
+                None => match enum_fields {
+                    EnumInnerFields::Unnamed(unnamed_enum_fields) => {
                         quote! {
-                            #source::#rename => Self::#name
+                            #source::#rename #unnamed_enum_fields => Self::#name #unnamed_enum_fields
                         }
-                    } else {
+                    }
+                    EnumInnerFields::Named(named_enum_fields) => {
                         quote! {
                             #source::#rename{#named_enum_fields} => Self::#name {#named_enum_fields}
                         }
                     }
-                }
+                    EnumInnerFields::Unit => {
+                        quote! {
+                            #source::#rename => Self::#name
+                        }
+                    }
+                },
             },
         }
     }
@@ -168,34 +169,24 @@ mod enum_builder {
         rename: Option<Ident>,
         extern_fn: Option<Ident>,
         fn_tmpl: Ident,
-        unnamed_enum_fields: TokenStream,
-        named_enum_fields: TokenStream,
+        enum_inner_fields: &EnumInnerFields,
     ) -> TokenStream {
-        let (match_ident, fn_args) = if !unnamed_enum_fields.is_empty() {
-            (
+        let (match_ident, fn_args) = match enum_inner_fields {
+            EnumInnerFields::Unnamed(tk) => (tk.clone(), tk.clone()),
+            EnumInnerFields::Named(tk) => (
                 quote! {
-                    #unnamed_enum_fields
+                    {#tk}
                 },
                 quote! {
-                    #unnamed_enum_fields
+                    (#tk)
                 },
-            )
-        } else if !named_enum_fields.is_empty() {
-            (
-                quote! {
-                    {#named_enum_fields}
-                },
-                quote! {
-                    (#named_enum_fields)
-                },
-            )
-        } else {
-            (
+            ),
+            EnumInnerFields::Unit => (
                 quote! {},
                 quote! {
                     (#source::#rename)
                 },
-            )
+            ),
         };
 
         match extern_fn {

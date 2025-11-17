@@ -23,6 +23,7 @@ enum SourceEnum {
     #[allow(dead_code)]
     Bar,
     Nado(String),
+    Elolo(String, String),
     Naming {
         firstname: String,
         lastname: String,
@@ -42,6 +43,7 @@ enum TargetEnum {
     #[brick_field(rename = "Bar", transform_func = "process_enum_source")]
     #[allow(unused)]
     C,
+    Elolo(String, String),
     #[brick_field(rename = "Nado", transform_func = "process_enum_content")]
     Oddo(String),
     #[brick_field(rename = "Naming")]
@@ -90,6 +92,13 @@ fn main() {
     {
         assert_eq!(firstname, "Nado");
         assert_eq!(lastname, "Dodo");
+    }
+
+    let unit_test = SourceEnum::Elolo("Hello".to_string(), "World".to_string());
+    let unit_test_res = TargetEnum::from(unit_test);
+    if let TargetEnum::Elolo(msg1, msg2) = unit_test_res {
+        assert_eq!(msg1, "Hello");
+        assert_eq!(msg2, "World");
     }
 
     println!("{:?}", res);
