@@ -103,20 +103,20 @@ enum UserError {
     NetworkError(String),
 }
 
-fn format_not_found(table: String) -> UserError {
-    UserError::NotFound(format!("❌ Could not find record in {}", table))
+fn format_not_found(table: String) -> String {
+    format!("❌ Could not find record in {}", table)
 }
 
-fn format_timeout(seconds: u32) -> UserError {
-    UserError::Timeout(format!("⏱️  Request timed out after {} seconds", seconds))
+fn format_timeout(seconds: u32) -> String {
+    format!("⏱️  Request timed out after {} seconds", seconds)
 }
 
-fn format_invalid(reason: String) -> UserError {
-    UserError::ValidationError(format!("⚠️  Invalid data: {}", reason))
+fn format_invalid(reason: String) -> String {
+    format!("⚠️  Invalid data: {}", reason)
 }
 
-fn format_connection(details: String) -> UserError {
-    UserError::NetworkError(format!("🔌 Connection issue: {}", details))
+fn format_connection(details: String) -> String {
+    format!("🔌 Connection issue: {}", details)
 }
 
 fn main() {

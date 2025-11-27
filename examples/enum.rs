@@ -1,7 +1,7 @@
 use brick::brick;
 
-fn process_enum_content(msg: String) -> TargetEnum {
-    TargetEnum::Oddo(format!("hello, 你好， ສະບາຍດີ {msg}"))
+fn process_enum_content(msg: String) -> String {
+    format!("hello, 你好， ສະບາຍດີ {msg}")
 }
 
 fn process_enum_source(src_enum: SourceEnum) -> TargetEnum {
