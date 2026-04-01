@@ -1,5 +1,5 @@
 use brick::brick;
-use chrono::{DateTime, Utc};
+use jiff::{Timestamp as JiffTimestamp, civil::DateTime, tz::TimeZone};
 
 // A dummy module to show that we can use a function from another module
 mod utils {
@@ -9,11 +9,12 @@ mod utils {
 }
 
 // Convert a timestamp to a chrono DateTime
-fn convert_ts_to_datetime(a: Timestamp) -> Result<DateTime<Utc>, std::io::Error> {
-    DateTime::from_timestamp(a.seconds, 0).ok_or(std::io::Error::new(
-        std::io::ErrorKind::Other,
-        "Failed to convert timestamp to datetime",
-    ))
+fn convert_ts_to_datetime(a: Timestamp) -> Result<DateTime, std::io::Error> {
+    let ts = JiffTimestamp::new(a.seconds, 0)
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))?
+        .to_zoned(TimeZone::UTC);
+
+    Ok(ts.into())
 }
 
 struct Timestamp {
@@ -41,7 +42,7 @@ struct Target {
         is_fallible = true
     )]
     #[allow(dead_code)]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
     #[brick_field(exclude = true)]
     #[allow(dead_code)]
     excluded: bool,
