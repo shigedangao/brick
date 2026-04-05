@@ -1,7 +1,10 @@
 [package]
-name = "brick"
-version = "0.2.0"
+authors = ["Marc Intha-amnouay <marc.inthaamnouay@gmail.com>"]
+description = "a proc-macro which map a type to another"
 edition = "2024"
+keywords = ["proc-macro", "map", "type"]
+name = "brick"
+version = "0.2.1"
 
 [lib]
 proc-macro = true
@@ -12,5 +15,4 @@ quote = "1.0.45"
 syn = { version = "2.0.117", features = ["full"] }
 
 [dev-dependencies]
-chrono = "0.4.38"
 jiff = "0.2.23"

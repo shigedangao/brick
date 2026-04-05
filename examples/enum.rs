@@ -40,18 +40,18 @@ enum TargetEnum {
     Foo,
     #[brick_field(rename = "Bar")]
     B,
-    #[brick_field(rename = "Bar", transform_func = "process_enum_source")]
+    #[brick_field(rename = "Bar", transform_fn = "process_enum_source")]
     #[allow(unused)]
     C,
     Elolo(String, String),
-    #[brick_field(rename = "Nado", transform_func = "process_enum_content")]
+    #[brick_field(rename = "Nado", transform_fn = "process_enum_content")]
     Oddo(String),
     #[brick_field(rename = "Naming")]
     Name {
         firstname: String,
         lastname: String,
     },
-    #[brick_field(transform_func = "process_origin_content")]
+    #[brick_field(transform_fn = "process_origin_content")]
     Origin {
         country: String,
         city: String,

@@ -10,6 +10,13 @@ It supports these features:
 - Transformation func to perform any operation (either from a module, a trait or a function existing in the same scope)
 - IsFallible support when using TryFrom trait to mark a transformation function as fallible (Result sum type)
 
+## Usage
+
+```toml
+[dependencies]
+brick = "0.2.1"
+```
+
 ## Basic sample
 
 Below is an example of how to use the `brick` macro to perform a simple conversion from a type A to B and allowing to skip a field during the conversion.
@@ -58,9 +65,9 @@ struct Source {
 )]
 struct Target {
     name: String,
-    #[brick_field(transform_func = "convert_ts_to_datetime", rename = "ts", is_fallible = true)]
+    #[brick_field(transform_fn = "convert_ts_to_datetime", rename = "ts", is_fallible = true)]
     timestamp: DateTime<Utc>,
-    #[brick_field(transform_func = "create_hello_world")]
+    #[brick_field(transform_fn = "create_hello_world")]
     hello: String,
 }
 ```
@@ -90,16 +97,16 @@ enum DbError {
 #[derive(Debug)]
 #[brick(converter = "From", source = "DbError")]
 enum UserError {
-    #[brick_field(rename = "NotFound", transform_func = "format_not_found")]
+    #[brick_field(rename = "NotFound", transform_fn = "format_not_found")]
     NotFound(String),
 
-    #[brick_field(rename = "Timeout", transform_func = "format_timeout")]
+    #[brick_field(rename = "Timeout", transform_fn = "format_timeout")]
     Timeout(String),
 
-    #[brick_field(rename = "InvalidData", transform_func = "format_invalid")]
+    #[brick_field(rename = "InvalidData", transform_fn = "format_invalid")]
     ValidationError(String),
 
-    #[brick_field(rename = "ConnectionLost", transform_func = "format_connection")]
+    #[brick_field(rename = "ConnectionLost", transform_fn = "format_connection")]
     NetworkError(String),
 }
 

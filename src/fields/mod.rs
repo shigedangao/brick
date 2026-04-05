@@ -22,7 +22,7 @@ impl Parse for BrickFieldArgs {
         let _eq_token: Token![=] = input.parse()?;
 
         match keyword {
-            k if k == "transform_func" => Ok(BrickFieldArgs::ConvertFieldFn(input.parse()?)),
+            k if k == "transform_fn" => Ok(BrickFieldArgs::ConvertFieldFn(input.parse()?)),
             k if k == "fn_from_extern" => Ok(BrickFieldArgs::FnFromExtern(input.parse()?)),
             k if k == "rename" => Ok(BrickFieldArgs::Rename(input.parse()?)),
             k if k == "exclude" => Ok(BrickFieldArgs::Exclude(input.parse()?)),
