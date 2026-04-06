@@ -37,7 +37,7 @@ struct Target {
     #[allow(dead_code)]
     name: String,
     #[brick_field(
-        transform_func = "convert_ts_to_datetime",
+        transform_fn = "convert_ts_to_datetime",
         rename = "ts",
         is_fallible = true
     )]
@@ -46,7 +46,7 @@ struct Target {
     #[brick_field(exclude = true)]
     #[allow(dead_code)]
     excluded: bool,
-    #[brick_field(transform_func = "append_hello", fn_from_extern = "utils")]
+    #[brick_field(transform_fn = "append_hello", fn_from_extern = "utils")]
     hello: String,
 }
 

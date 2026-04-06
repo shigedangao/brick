@@ -13,16 +13,16 @@ enum DbError {
 #[brick(converter = "From", source = "DbError")]
 #[allow(dead_code)]
 enum UserError {
-    #[brick_field(rename = "NotFound", transform_func = "format_not_found")]
+    #[brick_field(rename = "NotFound", transform_fn = "format_not_found")]
     NotFound(String),
 
-    #[brick_field(rename = "Timeout", transform_func = "format_timeout")]
+    #[brick_field(rename = "Timeout", transform_fn = "format_timeout")]
     Timeout(String),
 
-    #[brick_field(rename = "InvalidData", transform_func = "format_invalid")]
+    #[brick_field(rename = "InvalidData", transform_fn = "format_invalid")]
     ValidationError(String),
 
-    #[brick_field(rename = "ConnectionLost", transform_func = "format_connection")]
+    #[brick_field(rename = "ConnectionLost", transform_fn = "format_connection")]
     NetworkError(String),
 }
 

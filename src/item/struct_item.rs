@@ -4,21 +4,24 @@ use crate::fields::BrickFieldArgs;
 use crate::item::SupportedType;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::punctuated::Punctuated;
-use syn::{ItemStruct, Token};
+use syn::{ItemStruct, Token, punctuated::Punctuated};
 
 const FIELD_NAME: &str = "brick_field";
 
 impl ProcessItem for ItemStruct {
     fn process(&mut self, attrs: BrickAttributes, supported_type: SupportedType) -> TokenStream {
-        let mut processed_fields = Vec::new();
+        let mut processed_fields = Vec::with_capacity(self.fields.len());
 
-        for field in self.fields.clone() {
-            let name = field.ident.clone().expect("Expect to found a name");
+        for field in &self.fields {
+            let name = field
+                .ident
+                .clone()
+                .expect("Expect to found an identifier e.g: `name`");
 
-            let mut field_attrs = Vec::new();
+            let mut field_attrs = Vec::with_capacity(field.attrs.len());
 
-            for attr in field.attrs {
+            for attr in &field.attrs {
+                // We parse the attributes only for the `brick_field` attribute e.g: `#[brick_field(transform_fn = "fn")]`
                 if attr.path().is_ident(FIELD_NAME) {
                     let meta: Punctuated<BrickFieldArgs, Token![,]> =
                         attr.parse_args_with(Punctuated::parse_terminated).unwrap();
