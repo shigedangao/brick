@@ -1,4 +1,4 @@
-use brick::brick;
+use bricke::bricke;
 
 fn process_enum_content(msg: String) -> String {
     format!("hello, 你好， ສະບາຍດີ {msg}")
@@ -35,23 +35,23 @@ enum SourceEnum {
 }
 
 #[derive(Debug)]
-#[brick(converter = "From", source = "SourceEnum")]
+#[bricke(converter = "From", source = "SourceEnum")]
 enum TargetEnum {
     Foo,
-    #[brick_field(rename = "Bar")]
+    #[bricke_field(rename = "Bar")]
     B,
-    #[brick_field(rename = "Bar", transform_fn = "process_enum_source")]
+    #[bricke_field(rename = "Bar", transform_fn = "process_enum_source")]
     #[allow(unused)]
     C,
     Elolo(String, String),
-    #[brick_field(rename = "Nado", transform_fn = "process_enum_content")]
+    #[bricke_field(rename = "Nado", transform_fn = "process_enum_content")]
     Oddo(String),
-    #[brick_field(rename = "Naming")]
+    #[bricke_field(rename = "Naming")]
     Name {
         firstname: String,
         lastname: String,
     },
-    #[brick_field(transform_fn = "process_origin_content")]
+    #[bricke_field(transform_fn = "process_origin_content")]
     Origin {
         country: String,
         city: String,

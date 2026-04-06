@@ -10,19 +10,19 @@ pub enum ConverterType {
     TryFrom,
 }
 
-/// BrickAttributes is a struct that holds the attributes for the brick proc macro.
+/// brickeAttributes is a struct that holds the attributes for the bricke proc macro.
 ///
 /// - Converter refers to the type of conversion to be performed (From or TryFrom) default = From
-/// - source refers to the struct or enum that the brick will be converted from
+/// - source refers to the struct or enum that the bricke will be converted from
 /// - error_kind refers to the error kind that will be returned if the conversion fails (use in conjunction with TryFrom)
 #[derive(Default)]
-pub struct BrickAttributes {
+pub struct BrickeAttributes {
     pub converter: ConverterType,
     pub source: Option<Ident>,
     pub error_kind: Option<LitStr>,
 }
 
-impl BrickAttributes {
+impl BrickeAttributes {
     pub fn parse(&mut self, meta: ParseNestedMeta) -> Result<()> {
         if meta.path.get_ident().is_none() {
             return Err(syn::Error::new(meta.path.span(), "Unknown attribute"));

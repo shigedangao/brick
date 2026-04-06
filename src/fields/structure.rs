@@ -1,6 +1,6 @@
 use super::*;
 
-impl BrickFieldArgs {
+impl BrickeFieldArgs {
     /// Create the struct template which will be used inside the field to map the path src: target
     ///
     /// # Arguments

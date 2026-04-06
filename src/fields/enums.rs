@@ -1,6 +1,6 @@
 use super::*;
 
-impl BrickFieldArgs {
+impl BrickeFieldArgs {
     /// Create the enum template which will be used inside the field to map the path src: target within a match statement.
     /// This will create an enum value for "each statement" e.g:
     ///    - Source::Foo => Target::Foo

@@ -1,7 +1,7 @@
 use super::ProcessItem;
 use crate::{
-    attributes::BrickAttributes,
-    fields::BrickFieldArgs,
+    attributes::BrickeAttributes,
+    fields::BrickeFieldArgs,
     item::{FIELD_NAME, SupportedType},
 };
 use proc_macro2::TokenStream;
@@ -18,7 +18,7 @@ pub enum EnumInnerFields {
 impl ProcessItem for ItemEnum {
     fn process(
         &mut self,
-        attrs: BrickAttributes,
+        attrs: BrickeAttributes,
         supported_type: SupportedType,
     ) -> proc_macro2::TokenStream {
         let target = self.ident.clone();
@@ -30,17 +30,17 @@ impl ProcessItem for ItemEnum {
 
             let mut field_attrs = Vec::new();
             for attr in item.attrs {
-                // Like the struct fields, we need to collect the #[brick_field] attributes
+                // Like the struct fields, we need to collect the #[bricke_field] attributes
                 if attr.path().is_ident(super::FIELD_NAME) {
-                    // Parse the #[brick_field] attribute arguments separate by a comma and collect them
-                    let meta: Punctuated<BrickFieldArgs, Token![,]> =
+                    // Parse the #[bricke_field] attribute arguments separate by a comma and collect them
+                    let meta: Punctuated<BrickeFieldArgs, Token![,]> =
                         attr.parse_args_with(Punctuated::parse_terminated).unwrap();
 
                     field_attrs.extend(meta.into_iter());
                 }
             }
 
-            field_tk.push(BrickFieldArgs::create_enum_template(
+            field_tk.push(BrickeFieldArgs::create_enum_template(
                 field_name,
                 attrs.source.clone(),
                 field_attrs,
@@ -50,7 +50,7 @@ impl ProcessItem for ItemEnum {
 
         let expanded = attrs.generate_conversion_template(target, field_tk, supported_type.clone());
 
-        // Remove the #[brick(field)] attribute from the variants before passing to the TokenStream
+        // Remove the #[bricke(field)] attribute from the variants before passing to the TokenStream
         self.variants.iter_mut().for_each(|field| {
             field.attrs.retain(|attr| !attr.path().is_ident(FIELD_NAME));
         });

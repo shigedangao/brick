@@ -4,7 +4,7 @@ description = "a proc-macro which map a type to another"
 edition = "2024"
 keywords = ["proc-macro", "map", "type"]
 license = "MIT"
-name = "brick"
+name = "bricke"
 version = "0.2.1"
 
 [lib]

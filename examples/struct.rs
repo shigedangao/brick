@@ -1,4 +1,4 @@
-use brick::brick;
+use bricke::bricke;
 use jiff::{Timestamp as JiffTimestamp, civil::DateTime, tz::TimeZone};
 
 // A dummy module to show that we can use a function from another module
@@ -28,7 +28,7 @@ struct Source {
 }
 
 #[derive(Debug)]
-#[brick(
+#[bricke(
     converter = "TryFrom",
     source = "Source",
     try_error_kind = "std::io::Error"
@@ -36,17 +36,17 @@ struct Source {
 struct Target {
     #[allow(dead_code)]
     name: String,
-    #[brick_field(
+    #[bricke_field(
         transform_fn = "convert_ts_to_datetime",
         rename = "ts",
         is_fallible = true
     )]
     #[allow(dead_code)]
     timestamp: DateTime,
-    #[brick_field(exclude = true)]
+    #[bricke_field(exclude = true)]
     #[allow(dead_code)]
     excluded: bool,
-    #[brick_field(transform_fn = "append_hello", fn_from_extern = "utils")]
+    #[bricke_field(transform_fn = "append_hello", fn_from_extern = "utils")]
     hello: String,
 }
 

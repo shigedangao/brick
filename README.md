@@ -1,4 +1,4 @@
-# Brick 🧱
+# bricke 🧱
 
 A proc-macro inspired from [struct_morph](https://github.com/shrynx/struct_morph/tree/main) to convert from a type using From or TryFrom for a `struct` or an `enum`
 
@@ -14,26 +14,26 @@ It supports these features:
 
 ```toml
 [dependencies]
-brick = "0.2.1"
+bricke = "0.2.1"
 ```
 
 ## Basic sample
 
-Below is an example of how to use the `brick` macro to perform a simple conversion from a type A to B and allowing to skip a field during the conversion.
+Below is an example of how to use the `bricke` macro to perform a simple conversion from a type A to B and allowing to skip a field during the conversion.
 
 ```rust
-use brick::brick;
+use bricke::bricke;
 
 struct Source {
     name: String,
 }
 
-#[brick(
+#[bricke(
     converter = "From",
 )]
 struct Target {
     name: String,
-    #[brick_field(exclude = true)]
+    #[bricke_field(exclude = true)]
     bar: String
 }
 ```
@@ -58,16 +58,16 @@ struct Source {
     hello: String,
 }
 
-#[brick(
+#[bricke(
     converter = "TryFrom",
     source = "Sourde",
     try_error_kind = "std::io::Error"
 )]
 struct Target {
     name: String,
-    #[brick_field(transform_fn = "convert_ts_to_datetime", rename = "ts", is_fallible = true)]
+    #[bricke_field(transform_fn = "convert_ts_to_datetime", rename = "ts", is_fallible = true)]
     timestamp: DateTime<Utc>,
-    #[brick_field(transform_fn = "create_hello_world")]
+    #[bricke_field(transform_fn = "create_hello_world")]
     hello: String,
 }
 ```
@@ -82,7 +82,7 @@ Enum is more complex to work with than the struct. Below are the features that a
 
 ## Basic example
 
-Below is an example of how to use the `brick` macro to perform a conversion of a Source enum to a PayloadFromSource enum. Here the goal is to convert an enum which contains some Error and map to our own defined Error
+Below is an example of how to use the `bricke` macro to perform a conversion of a Source enum to a PayloadFromSource enum. Here the goal is to convert an enum which contains some Error and map to our own defined Error
 
 ```rust
 // Raw error codes from a database or external system
@@ -95,18 +95,18 @@ enum DbError {
 
 // User-friendly error messages
 #[derive(Debug)]
-#[brick(converter = "From", source = "DbError")]
+#[bricke(converter = "From", source = "DbError")]
 enum UserError {
-    #[brick_field(rename = "NotFound", transform_fn = "format_not_found")]
+    #[bricke_field(rename = "NotFound", transform_fn = "format_not_found")]
     NotFound(String),
 
-    #[brick_field(rename = "Timeout", transform_fn = "format_timeout")]
+    #[bricke_field(rename = "Timeout", transform_fn = "format_timeout")]
     Timeout(String),
 
-    #[brick_field(rename = "InvalidData", transform_fn = "format_invalid")]
+    #[bricke_field(rename = "InvalidData", transform_fn = "format_invalid")]
     ValidationError(String),
 
-    #[brick_field(rename = "ConnectionLost", transform_fn = "format_connection")]
+    #[bricke_field(rename = "ConnectionLost", transform_fn = "format_connection")]
     NetworkError(String),
 }
 

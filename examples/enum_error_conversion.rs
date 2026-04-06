@@ -1,4 +1,4 @@
-use brick::brick;
+use bricke::bricke;
 
 enum DbError {
     NotFound(String),
@@ -10,19 +10,19 @@ enum DbError {
 
 // User-friendly error messages
 #[derive(Debug)]
-#[brick(converter = "From", source = "DbError")]
+#[bricke(converter = "From", source = "DbError")]
 #[allow(dead_code)]
 enum UserError {
-    #[brick_field(rename = "NotFound", transform_fn = "format_not_found")]
+    #[bricke_field(rename = "NotFound", transform_fn = "format_not_found")]
     NotFound(String),
 
-    #[brick_field(rename = "Timeout", transform_fn = "format_timeout")]
+    #[bricke_field(rename = "Timeout", transform_fn = "format_timeout")]
     Timeout(String),
 
-    #[brick_field(rename = "InvalidData", transform_fn = "format_invalid")]
+    #[bricke_field(rename = "InvalidData", transform_fn = "format_invalid")]
     ValidationError(String),
 
-    #[brick_field(rename = "ConnectionLost", transform_fn = "format_connection")]
+    #[bricke_field(rename = "ConnectionLost", transform_fn = "format_connection")]
     NetworkError(String),
 }
 
