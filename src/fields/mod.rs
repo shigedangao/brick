@@ -7,10 +7,12 @@ use syn::{Ident, LitBool, LitStr, Result, Token, parse::Parse, parse::ParseStrea
 pub mod enums;
 pub mod structure;
 
+// Constants
+const ERROR_PARSE_FN: &str = "Expect a function call";
+
 #[derive(Clone)]
 pub enum BrickeFieldArgs {
     ConvertFieldFn(LitStr),
-    FnFromExtern(LitStr),
     Rename(LitStr),
     Exclude(LitBool),
     IsFallible(LitBool),
@@ -23,7 +25,6 @@ impl Parse for BrickeFieldArgs {
 
         match keyword {
             k if k == "transform_fn" => Ok(BrickeFieldArgs::ConvertFieldFn(input.parse()?)),
-            k if k == "fn_from_extern" => Ok(BrickeFieldArgs::FnFromExtern(input.parse()?)),
             k if k == "rename" => Ok(BrickeFieldArgs::Rename(input.parse()?)),
             k if k == "exclude" => Ok(BrickeFieldArgs::Exclude(input.parse()?)),
             k if k == "is_fallible" => Ok(BrickeFieldArgs::IsFallible(input.parse()?)),

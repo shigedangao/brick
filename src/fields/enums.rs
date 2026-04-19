@@ -1,4 +1,5 @@
 use super::*;
+use syn::Path;
 
 impl BrickeFieldArgs {
     /// Create the enum template which will be used inside the field to map the path src: target within a match statement.
@@ -17,8 +18,7 @@ impl BrickeFieldArgs {
     ) -> TokenStream {
         let mut rename: Option<Ident> = Some(name.clone());
         let mut to_skip = false;
-        let mut func: Option<Ident> = None;
-        let mut fn_from_extern: Option<Ident> = None;
+        let mut f: Option<Path> = None;
 
         for field in fields {
             if let Self::Rename(rename_field) = field.to_owned() {
@@ -32,25 +32,17 @@ impl BrickeFieldArgs {
             }
 
             if let Self::ConvertFieldFn(fn_field) = field.to_owned() {
-                func = Some(Ident::new(&fn_field.value(), Span::call_site()));
-            }
-
-            if let Self::FnFromExtern(t) = field.to_owned() {
-                fn_from_extern = Some(Ident::new(&t.value(), Span::call_site()));
+                f = fn_field
+                    .parse_with(syn::Path::parse_mod_style)
+                    .map_err(|_| syn::Error::new(fn_field.span(), ERROR_PARSE_FN))
+                    .ok();
             }
         }
 
         match to_skip {
             true => quote! {},
-            false => match func {
-                Some(f) => enum_builder::generate_enum_fn(
-                    source,
-                    name,
-                    rename,
-                    fn_from_extern,
-                    f,
-                    &enum_fields,
-                ),
+            false => match f {
+                Some(f) => enum_builder::generate_enum_fn(source, name, rename, f, &enum_fields),
                 None => match enum_fields {
                     EnumInnerFields::Unnamed(unnamed_enum_fields) => {
                         quote! {
@@ -80,33 +72,27 @@ mod enum_builder {
         source: Option<Ident>,
         original_field_name: Ident,
         rename: Option<Ident>,
-        extern_fn: Option<Ident>,
-        fn_tmpl: Ident,
+        fn_tmpl: Path,
         enum_inner_fields: &EnumInnerFields,
     ) -> TokenStream {
-        let fn_call_template = match extern_fn {
-            Some(ext) => quote! { #ext:: #fn_tmpl },
-            None => quote! { #fn_tmpl },
-        };
-
         let (source_idents, complete_fn_call) = match enum_inner_fields {
             EnumInnerFields::Unnamed(tk) => (
                 tk.clone(),
                 quote! {
-                Self::#original_field_name(#fn_call_template(#tk)) },
+                Self::#original_field_name(#fn_tmpl(#tk)) },
             ),
             EnumInnerFields::Named(tk) => (
                 quote! {
                     {#tk}
                 },
                 quote! {
-                    #fn_call_template (#tk)
+                    #fn_tmpl (#tk)
                 },
             ),
             EnumInnerFields::Unit => (
                 quote! {},
                 quote! {
-                    #fn_call_template (#source::#rename)
+                    #fn_tmpl (#source::#rename)
                 },
             ),
         };

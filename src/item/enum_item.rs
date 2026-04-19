@@ -33,10 +33,17 @@ impl ProcessItem for ItemEnum {
                 // Like the struct fields, we need to collect the #[bricke_field] attributes
                 if attr.path().is_ident(super::FIELD_NAME) {
                     // Parse the #[bricke_field] attribute arguments separate by a comma and collect them
-                    let meta: Punctuated<BrickeFieldArgs, Token![,]> =
-                        attr.parse_args_with(Punctuated::parse_terminated).unwrap();
+                    let meta: Punctuated<BrickeFieldArgs, Token![,]> = attr
+                        .parse_args_with(Punctuated::parse_terminated)
+                        .map_err(|err| {
+                            syn::Error::new(
+                                attr.span(),
+                                format!("Unable to parse enum attributes {}", err),
+                            )
+                        })
+                        .unwrap();
 
-                    field_attrs.extend(meta.into_iter());
+                    field_attrs.extend(meta);
                 }
             }
 

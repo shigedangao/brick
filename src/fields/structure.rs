@@ -1,4 +1,5 @@
 use super::*;
+use syn::Path;
 
 impl BrickeFieldArgs {
     /// Create the struct template which will be used inside the field to map the path src: target
@@ -8,8 +9,7 @@ impl BrickeFieldArgs {
     /// * `fields` - The fields of the struct template.
     pub(crate) fn create_struct_template(name: Ident, fields: Vec<Self>) -> TokenStream {
         let mut from_field_name: Option<Ident> = Some(name.clone());
-        let mut fn_from_extern: Option<syn::Ident> = None;
-        let mut func: Option<Ident> = None;
+        let mut f: Option<Path> = None;
         let mut to_skip = false;
         let mut is_fallible = false;
 
@@ -18,12 +18,11 @@ impl BrickeFieldArgs {
                 from_field_name = Some(Ident::new(&n.value(), Span::call_site()));
             }
 
-            if let Self::FnFromExtern(t) = field.to_owned() {
-                fn_from_extern = Some(Ident::new(&t.value(), Span::call_site()));
-            }
-
-            if let Self::ConvertFieldFn(f) = field.to_owned() {
-                func = Some(Ident::new(&f.value(), Span::call_site()));
+            if let Self::ConvertFieldFn(fn_str) = field.to_owned() {
+                f = fn_str
+                    .parse_with(syn::Path::parse_mod_style)
+                    .map_err(|_| syn::Error::new(fn_str.span(), ERROR_PARSE_FN))
+                    .ok();
             }
 
             if let Self::IsFallible(r) = field.to_owned() {
@@ -51,15 +50,8 @@ impl BrickeFieldArgs {
             true => quote! {
                 #name: Default::default()
             },
-            false => match func {
-                Some(f) => match fn_from_extern {
-                    Some(t) => quote! {
-                        #name: #t::#f #res_call
-                    },
-                    None => quote! {
-                        #name: #f #res_call
-                    },
-                },
+            false => match f {
+                Some(f) => quote! { #name: #f #res_call },
                 None => quote! { #name: arg.#from_field_name },
             },
         }

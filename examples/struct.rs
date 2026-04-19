@@ -46,7 +46,7 @@ struct Target {
     #[bricke_field(exclude = true)]
     #[allow(dead_code)]
     excluded: bool,
-    #[bricke_field(transform_fn = "append_hello", fn_from_extern = "utils")]
+    #[bricke_field(transform_fn = "utils::append_hello")]
     hello: String,
 }
 
