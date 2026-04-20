@@ -1,12 +1,10 @@
-use super::ProcessItem;
+use super::{FIELD_NAME, ProcessItem};
 use crate::attributes::BrickeAttributes;
 use crate::fields::BrickeFieldArgs;
 use crate::item::SupportedType;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{ItemStruct, Token, punctuated::Punctuated};
-
-const FIELD_NAME: &str = "bricke_field";
+use syn::{ItemStruct, Token, punctuated::Punctuated, spanned::Spanned};
 
 impl ProcessItem for ItemStruct {
     fn process(&mut self, attrs: BrickeAttributes, supported_type: SupportedType) -> TokenStream {
@@ -23,9 +21,17 @@ impl ProcessItem for ItemStruct {
             for attr in &field.attrs {
                 // We parse the attributes only for the `bricke_field` attribute e.g: `#[bricke_field(transform_fn = "fn")]`
                 if attr.path().is_ident(FIELD_NAME) {
-                    let meta: Punctuated<BrickeFieldArgs, Token![,]> =
-                        attr.parse_args_with(Punctuated::parse_terminated).unwrap();
-                    field_attrs.extend(meta.into_iter());
+                    let meta: Punctuated<BrickeFieldArgs, Token![,]> = attr
+                        .parse_args_with(Punctuated::parse_terminated)
+                        .map_err(|err| {
+                            syn::Error::new(
+                                attr.span(),
+                                format!("Unable to parse struct attribute {}", err),
+                            )
+                        })
+                        .unwrap();
+
+                    field_attrs.extend(meta);
                 }
             }
 
