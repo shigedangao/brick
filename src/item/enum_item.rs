@@ -17,7 +17,7 @@ pub enum EnumInnerFields {
 
 impl ProcessItem for ItemEnum {
     fn process(
-        &mut self,
+        mut self,
         attrs: BrickeAttributes,
         supported_type: SupportedType,
     ) -> proc_macro2::TokenStream {
@@ -28,12 +28,11 @@ impl ProcessItem for ItemEnum {
             .collect();
 
         let mut field_tk = Vec::with_capacity(self.variants.len());
-        for item in self.variants.clone() {
-            let field_name = item.ident;
-            let parsed_enum_fields = process_enum_inner_fields(item.fields);
+        for item in self.variants.iter_mut() {
+            let parsed_enum_fields = process_enum_inner_fields(&item.fields);
 
             let mut field_attrs = Vec::new();
-            for attr in item.attrs {
+            for attr in &item.attrs {
                 // Like the struct fields, we need to collect the #[bricke_field] attributes
                 if attr.path().is_ident(super::FIELD_NAME) {
                     // Parse the #[bricke_field] attribute arguments separate by a comma and collect them
@@ -52,11 +51,14 @@ impl ProcessItem for ItemEnum {
             }
 
             field_tk.push(BrickeFieldArgs::create_enum_template(
-                &field_name,
+                &item.ident,
                 attrs.source.as_ref(),
                 field_attrs,
                 parsed_enum_fields,
             ));
+
+            // Remove the #[bricke(field)] attribute from the variants before passing to the TokenStream
+            item.attrs.retain(|attr| !attr.path().is_ident(FIELD_NAME));
         }
 
         let expanded = attrs.generate_conversion_template(
@@ -65,11 +67,6 @@ impl ProcessItem for ItemEnum {
             &supported_type,
             &target_lifetimes,
         );
-
-        // Remove the #[bricke(field)] attribute from the variants before passing to the TokenStream
-        self.variants.iter_mut().for_each(|field| {
-            field.attrs.retain(|attr| !attr.path().is_ident(FIELD_NAME));
-        });
 
         quote! {
             #self
@@ -87,12 +84,12 @@ impl ProcessItem for ItemEnum {
 /// - Named fields will generate a tuple of arguments in the following format (`arg_0`, `arg_1`, ...)
 ///
 /// /!\ Named fields are not supported yet
-fn process_enum_inner_fields(fields: Fields) -> EnumInnerFields {
+fn process_enum_inner_fields(fields: &Fields) -> EnumInnerFields {
     match fields {
         Fields::Unnamed(un) => {
             let parsed_fields: Vec<TokenStream> = un
                 .unnamed
-                .into_iter()
+                .iter()
                 .enumerate()
                 .map(|(idx, field)| {
                     let ident = Ident::new(&format!("arg_{idx}"), field.span());
@@ -107,9 +104,9 @@ fn process_enum_inner_fields(fields: Fields) -> EnumInnerFields {
         Fields::Named(nfields) => {
             let parsed_nfields: Vec<TokenStream> = nfields
                 .named
-                .into_iter()
+                .iter()
                 .enumerate()
-                .map(|(idx, field)| match field.ident {
+                .map(|(idx, field)| match &field.ident {
                     Some(ident) => {
                         let id = Ident::new(&ident.to_string(), ident.span());
                         quote! { #id }

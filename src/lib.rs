@@ -61,8 +61,8 @@ pub fn bricke(args: TokenStream, target: TokenStream) -> TokenStream {
     parse_macro_input!(args with bricke_parser);
 
     let expanded = match input_kind {
-        Item::Struct(mut item) => item.process(attrs, item::SupportedType::Struct),
-        Item::Enum(mut item) => item.process(attrs, item::SupportedType::Enum),
+        Item::Struct(item) => item.process(attrs, item::SupportedType::Struct),
+        Item::Enum(item) => item.process(attrs, item::SupportedType::Enum),
         _ => unimplemented!("Type is not supported"),
     };
 

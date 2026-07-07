@@ -7,7 +7,7 @@ use quote::quote;
 use syn::{ItemStruct, Lifetime, Token, punctuated::Punctuated, spanned::Spanned};
 
 impl ProcessItem for ItemStruct {
-    fn process(&mut self, attrs: BrickeAttributes, supported_type: SupportedType) -> TokenStream {
+    fn process(mut self, attrs: BrickeAttributes, supported_type: SupportedType) -> TokenStream {
         let mut processed_fields = Vec::with_capacity(self.fields.len());
         let target_lifetimes: Punctuated<Lifetime, Token![,]> = self
             .generics
@@ -15,7 +15,7 @@ impl ProcessItem for ItemStruct {
             .map(|v| v.lifetime.clone())
             .collect();
 
-        for field in &self.fields {
+        for field in self.fields.iter_mut() {
             let name = field
                 .ident
                 .clone()
@@ -41,12 +41,10 @@ impl ProcessItem for ItemStruct {
             }
 
             processed_fields.push(BrickeFieldArgs::create_struct_template(&name, field_attrs));
-        }
 
-        // Use to remove the attributes bricke_field from the AST so that it doesn't get printed
-        self.fields.iter_mut().for_each(|field| {
+            // Remove the `bricke_field` attribute from the AST so that it doesn't get printed
             field.attrs.retain(|attr| !attr.path().is_ident(FIELD_NAME));
-        });
+        }
 
         let expanded = attrs.generate_conversion_template(
             &self.ident,

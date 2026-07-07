@@ -41,7 +41,7 @@ pub(crate) trait ProcessItem {
     /// * `attrs` - The attributes of the item
     /// * `supported_type` - The supported type of the item (struct or enum)
     fn process(
-        &mut self,
+        self,
         attrs: BrickeAttributes,
         supported_type: SupportedType,
     ) -> proc_macro2::TokenStream;

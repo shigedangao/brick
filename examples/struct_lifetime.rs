@@ -23,6 +23,7 @@ struct Output {
 #[bricke(converter = "TryFrom", source = "Input", try_error_type = "std::io::Error", lifetimes = 'a)]
 struct OutputLifetime<'a> {
     #[bricke_field(transform_fn = "transform_data_with_error", is_fallible = true)]
+    #[allow(dead_code)]
     data: &'a [u8],
 }
 
