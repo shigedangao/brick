@@ -10,6 +10,7 @@ impl BrickeFieldArgs {
     /// * `name` - The name of the enum template.
     /// * `source` - The source of the enum template.
     /// * `fields` - The fields of the enum template.
+    /// * `enum_fields` - The inner fields of the enum.
     pub fn create_enum_template(
         name: &Ident,
         source: Option<&Ident>,
@@ -18,48 +19,53 @@ impl BrickeFieldArgs {
     ) -> TokenStream {
         let mut rename: Option<Ident> = Some(name.clone());
         let mut to_skip = false;
-        let mut f: Option<Path> = None;
+        let mut field_fn: Option<Path> = None;
 
         for field in fields {
+            // Process rename field
             if let Self::Rename(rename_field) = &field {
                 rename = Some(Ident::new(&rename_field.value(), Span::call_site()));
             }
 
+            // Process ignore field
             if let Self::Ignore = &field {
                 to_skip = true;
             }
 
+            // Process convert field function
             if let Self::ConvertFieldFn(fn_field) = &field {
-                f = fn_field
+                field_fn = fn_field
                     .parse_with(syn::Path::parse_mod_style)
                     .map_err(|_| syn::Error::new(fn_field.span(), ERROR_PARSE_FN))
                     .ok();
             }
         }
 
-        match to_skip {
-            true => quote! {},
-            false => match f {
-                Some(f) => {
-                    enum_builder::generate_enum_fn(source, name, rename.as_ref(), &f, &enum_fields)
+        // If we need to skip a field, return an empty token stream
+        if to_skip {
+            return quote! {};
+        }
+
+        match field_fn {
+            Some(f) => {
+                enum_builder::generate_enum_fn(source, name, rename.as_ref(), &f, &enum_fields)
+            }
+            None => match enum_fields {
+                EnumInnerFields::Unnamed(unnamed_enum_fields) => {
+                    quote! {
+                        #source::#rename #unnamed_enum_fields => Self::#name #unnamed_enum_fields
+                    }
                 }
-                None => match enum_fields {
-                    EnumInnerFields::Unnamed(unnamed_enum_fields) => {
-                        quote! {
-                            #source::#rename #unnamed_enum_fields => Self::#name #unnamed_enum_fields
-                        }
+                EnumInnerFields::Named(named_enum_fields) => {
+                    quote! {
+                        #source::#rename{#named_enum_fields} => Self::#name {#named_enum_fields}
                     }
-                    EnumInnerFields::Named(named_enum_fields) => {
-                        quote! {
-                            #source::#rename{#named_enum_fields} => Self::#name {#named_enum_fields}
-                        }
+                }
+                EnumInnerFields::Unit => {
+                    quote! {
+                        #source::#rename => Self::#name
                     }
-                    EnumInnerFields::Unit => {
-                        quote! {
-                            #source::#rename => Self::#name
-                        }
-                    }
-                },
+                }
             },
         }
     }
@@ -68,6 +74,15 @@ impl BrickeFieldArgs {
 mod enum_builder {
     use super::{EnumInnerFields, Ident, Path, TokenStream, quote};
 
+    /// Generates a function call for an enum field.
+    ///
+    /// # Arguments
+    ///
+    /// * `source` - The source enum identifier.
+    /// * `original_field_name` - The original field name.
+    /// * `rename` - The renamed field name.
+    /// * `fn_tmpl` - The function template path.
+    /// * `enum_inner_fields` - The inner fields of the enum.
     pub fn generate_enum_fn(
         source: Option<&Ident>,
         original_field_name: &Ident,
@@ -77,9 +92,10 @@ mod enum_builder {
     ) -> TokenStream {
         let (source_idents, complete_fn_call) = match enum_inner_fields {
             EnumInnerFields::Unnamed(tk) => (
-                tk.clone(),
+                quote! {#tk},
                 quote! {
-                Self::#original_field_name(#fn_tmpl(#tk)) },
+                    Self::#original_field_name(#fn_tmpl(#tk))
+                },
             ),
             EnumInnerFields::Named(tk) => (
                 quote! {

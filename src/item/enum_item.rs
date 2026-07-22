@@ -82,8 +82,6 @@ impl ProcessItem for ItemEnum {
 /// - Unnamed fields will generate a tuple of arguments in the following format (`arg_0`, `arg_1`, ...)
 /// - Unit will just produce an empty `TokenStream`
 /// - Named fields will generate a tuple of arguments in the following format (`arg_0`, `arg_1`, ...)
-///
-/// /!\ Named fields are not supported yet
 fn process_enum_inner_fields(fields: &Fields) -> EnumInnerFields {
     match fields {
         Fields::Unnamed(un) => {
