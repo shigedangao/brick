@@ -25,6 +25,7 @@ const EQ_FIELDS: [&str; 4] = [
     FIELD_DEFAULT_VALUE,
 ];
 
+// BrickeFieldArgs is an enum representing the possible arguments of a struct / enum field.
 #[derive(Clone)]
 pub enum BrickeFieldArgs {
     ConvertFieldFn(LitStr),
