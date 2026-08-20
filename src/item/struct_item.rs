@@ -15,7 +15,7 @@ impl ProcessItem for ItemStruct {
             .map(|v| v.lifetime.clone())
             .collect();
 
-        for field in self.fields.iter_mut() {
+        for field in &mut self.fields {
             let name = field
                 .ident
                 .clone()

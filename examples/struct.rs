@@ -36,7 +36,7 @@ struct Source {
     try_error_type = "std::io::Error"
 )]
 struct Target {
-    #[allow(dead_code)]
+    #[bricke_field(transform_fn = "Source::change_name")]
     name: String,
     #[bricke_field(
         transform_fn = "convert_ts_to_datetime",
@@ -54,6 +54,12 @@ struct Target {
     to_replace: Option<String>,
 }
 
+impl Source {
+    fn change_name(name: String) -> String {
+        format!("{} !", name)
+    }
+}
+
 fn main() {
     let b = Source {
         name: "Doudou".to_string(),
@@ -67,4 +73,5 @@ fn main() {
     let foo = Target::try_from(b).unwrap();
     assert_eq!(foo.hello, "Hello, doudou");
     assert_eq!(foo.to_replace.unwrap(), "foo");
+    assert_eq!(foo.name, "Doudou !");
 }

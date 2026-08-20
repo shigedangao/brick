@@ -51,7 +51,7 @@ impl Parse for BrickeFieldArgs {
             k if k == FIELD_DEFAULT_VALUE => Ok(BrickeFieldArgs::DefaultValue(input.parse()?)),
             _ => Err(syn::Error::new(
                 keyword.span(),
-                format!("Attribute with name '{}' not supported", keyword),
+                format!("Attribute with name '{keyword}' not supported"),
             )),
         }
     }

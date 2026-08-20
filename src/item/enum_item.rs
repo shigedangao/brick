@@ -28,7 +28,7 @@ impl ProcessItem for ItemEnum {
             .collect();
 
         let mut field_tk = Vec::with_capacity(self.variants.len());
-        for item in self.variants.iter_mut() {
+        for item in &mut self.variants {
             let parsed_enum_fields = process_enum_inner_fields(&item.fields);
 
             let mut field_attrs = Vec::new();

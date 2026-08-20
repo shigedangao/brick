@@ -74,7 +74,7 @@ impl BrickeAttributes {
             }
             _ => Err(syn::Error::new(
                 ident.span(),
-                format!("Unknown attribute: {}", ident),
+                format!("Unknown attribute: {ident}"),
             )),
         }
     }
@@ -124,10 +124,10 @@ impl BrickeAttributes {
         };
 
         // Create the lifetime annotations for the target
-        let target_lifetimes_output = if !target_lifetimes.is_empty() {
-            quote! { <#target_lifetimes> }
-        } else {
+        let target_lifetimes_output = if target_lifetimes.is_empty() {
             quote! {}
+        } else {
+            quote! { <#target_lifetimes> }
         };
 
         match self.converter {
