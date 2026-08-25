@@ -41,25 +41,26 @@ impl BrickeFieldArgs {
             }
         }
 
-        // If we have a default value, use it; otherwise, use the field value from the argument.
+        if to_skip {
+            return quote! { #name: Default::default() };
+        }
+
         let arg_call = match default_value {
             Some(v) => quote! { Some(#v.into()) },
             None => quote! { arg.#from_field_name },
         };
 
-        let res_call = if is_fallible {
-            quote! { (#arg_call)? }
-        } else {
-            quote! { (#arg_call) }
-        };
+        match f {
+            Some(f) => {
+                let fn_call_with_arg = if is_fallible {
+                    quote! { (#arg_call)? }
+                } else {
+                    quote! { (#arg_call) }
+                };
 
-        if to_skip {
-            quote! { #name: Default::default() }
-        } else {
-            match f {
-                Some(f) => quote! { #name: #f #res_call },
-                None => quote! { #name: #arg_call },
+                quote! { #name: #f #fn_call_with_arg }
             }
+            None => quote! { #name: #arg_call },
         }
     }
 }
