@@ -16,7 +16,7 @@ It supports these features:
 
 ```toml
 [dependencies]
-bricke = "0.2.7"
+bricke = "0.2.91"
 ```
 
 ## Basic sample
