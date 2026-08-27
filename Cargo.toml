@@ -5,7 +5,7 @@ edition = "2024"
 keywords = ["proc-macro", "map", "type"]
 license = "MIT"
 name = "bricke"
-version = "0.2.9"
+version = "0.2.91"
 
 [lib]
 proc-macro = true
@@ -16,4 +16,4 @@ quote = "1.0.47"
 syn = { version = "3.0.4", features = ["full"] }
 
 [dev-dependencies]
-jiff = "0.2.34"
+jiff = "0.2.35"

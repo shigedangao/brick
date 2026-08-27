@@ -30,8 +30,8 @@ impl ProcessItem for ItemEnum {
         let mut field_tk = Vec::with_capacity(self.variants.len());
         for item in &mut self.variants {
             let parsed_enum_fields = process_enum_inner_fields(&item.fields);
+            let mut field_attrs = Vec::with_capacity(item.attrs.len());
 
-            let mut field_attrs = Vec::new();
             for attr in &item.attrs {
                 // Like the struct fields, we need to collect the #[bricke_field] attributes
                 if attr.path().is_ident(super::FIELD_NAME) {
